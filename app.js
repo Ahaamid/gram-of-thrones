@@ -1,31 +1,27 @@
 var express = require('express');
-var app = express();
+var fs = require('fs');
 var bodyParser = require('body-parser');
-var multer = require ('multer')
-var upload = multer({ dest: 'entries/' })
+var multer  = require('multer');
+var upload = multer({ dest: 'public/uploads/' });
 
-app.use(bodyParser.urlencoded({ extended: false}));
+var app = express();
 
-app.set('view engine', 'ejs');
-app.use(express.static('./public'));
+app.set('port', 3000);
 
-var data = [];
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.get('/', function(req, res) {
-	res.render('home');
+app.post('/upload', upload.single('file-to-upload'), function(req, res) {
+  console.log(req.file);
+
+  var uploadedFile = req.file.path;
+  var newLocation = `${req.file.destination}/${req.file.originalname}`;
+  fs.rename(uploadedFile, newLocation, function() {
+    res.send(`Saved to ${newLocation}.`);
+  });
 });
 
-app.get('/entries', function(req, res) {
-	res.render('entries');
-});
-
-app.post('/entries', upload.single('photo'), function(req, res) {
-	console.log(req.body);
-	console.log(req.file);
-	res.render('entries', {data: req.body});
-});
-
-
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+app.listen(app.get('port'), function() {
+  console.log("Server started on port " + app.get('port'));
 });
